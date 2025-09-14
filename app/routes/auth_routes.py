@@ -12,7 +12,8 @@ def login():
     email = data.get('email')
     password = data.get('password')
     
-    authorized = UserAuth(email, password)
+    user_auth = UserAuth(email, password)
+    authorized = user_auth.auth()
 
     if authorized:
         return jsonify({"status": "ok"}), 200

@@ -22,3 +22,4 @@ test.js
 prod_db.txt
 .pytest_cache
 app.log
+.github/
