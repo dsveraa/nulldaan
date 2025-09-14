@@ -15,7 +15,7 @@ db = SQLAlchemy()
 def create_app():
     app = Flask(__name__)
     
-    CORS(app, supports_credentials=True, origins=["https://nulldann.netlify.app"])
+    CORS(app, supports_credentials=True, origins=["https://nulldaan.netlify.app"])
     
     app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
