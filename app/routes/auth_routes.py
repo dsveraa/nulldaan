@@ -1,5 +1,7 @@
 from flask import request, jsonify, Blueprint
-from app.services.auth_services import Logout, AccountManagement, SignUp
+from app.repositories.user_repository import UserRepository
+from app.services.auth_services import AuthService
+from app.services.user_services import SignUpService
 
 
 auth_bp = Blueprint('auth', __name__)
@@ -11,9 +13,8 @@ def login():
     email = data.get('email')
     password = data.get('password')
     
-    account = AccountManagement(email, password)
-    authorized = account.login()
-    username = account.get_username()
+    authorized = AuthService.login(email, password)
+    username = UserRepository.get_by_email(email).name
 
     if authorized:
         return jsonify({'status': 'ok', 'username': username}), 200
@@ -23,7 +24,7 @@ def login():
 
 @auth_bp.route('/logout')
 def logout():
-    logout_query = Logout()
+    logout_query = AuthService.logout()
     return jsonify({'response': logout_query}), 200
 
 
@@ -34,17 +35,22 @@ def signup():
     email = data.get('email')
     password = data.get('password')
     
-    signup = SignUp(name, email, password)
-    result = signup.signup()
+    try:
+        new_user = SignUpService.register(name, email, password)
+        return jsonify({"status": "ok",
+            "user_id": new_user.id,
+            "name": new_user.name
+        }), 201
 
-    if result['status'] == 'error':
-        return jsonify(result), 400
+    except ValueError as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 400
 
-    return jsonify(result), 201
 
-
-@auth_bp.route('/account/<email>', methods=['DELETE'])
+@auth_bp.route('/account/<email>', methods=['DELETE']) # development
 def delete_account(email):
-    account = AccountManagement(email)
-    account.delete_user()    
+    user = UserRepository.get_by_email(email)
+    UserRepository.delete(user)
     return 'deleted', 204
