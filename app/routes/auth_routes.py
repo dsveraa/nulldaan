@@ -13,13 +13,16 @@ def login():
     email = data.get('email')
     password = data.get('password')
     
-    authorized = AuthService.login(email, password)
-    username = UserRepository.get_by_email(email).name
-
-    if authorized:
-        return jsonify({'status': 'ok', 'username': username}), 200
-    else:
-        return jsonify ({'status': 'error'}), 401
+    try:
+        user = AuthService.login(email, password)
+        return jsonify({'status': 'ok', 
+                        'user_id': user.id,
+                        'username': user.name
+                        }), 200
+    
+    except ValueError as e: 
+        return jsonify({'status': 'error',
+                        'message': str(e)}), 401
 
 
 @auth_bp.route('/logout')

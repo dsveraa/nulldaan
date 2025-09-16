@@ -8,12 +8,18 @@ class AuthService:
     @staticmethod
     def login(email, password):
         user = UserRepository.get_by_email(email)
-        if user and check_password_hash(user.password, password):
-            session['user_id'] = user.id
-            session['username'] = user.name
-            session.permanent = True
-            return True
-        return False
+        
+        if not user:
+            raise ValueError('User not found')
+        
+        if not check_password_hash(user.password, password):
+            raise ValueError('Incorrect password')
+        
+        session['user_id'] = user.id
+        session['username'] = user.name
+        session.permanent = True
+        return user
+        
 
     @staticmethod
     def logout():
