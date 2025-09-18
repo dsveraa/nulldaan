@@ -5,17 +5,23 @@ from decouple import Config, RepositoryEnv
 from datetime import timedelta
 from werkzeug.middleware.proxy_fix import ProxyFix
 from flask_cors import CORS
+from flask_jwt_extended import JWTManager
 
 import os
 
 from app.utils.debugging_utils import printn
 
 db = SQLAlchemy()
+jwt = JWTManager()
 
 def create_app():
     app = Flask(__name__)
     
-    CORS(app, supports_credentials=True, origins=["https://nulldaan.netlify.app"])
+    CORS(app, supports_credentials=True, origins=[
+        "https://nulldaan.netlify.app", 
+        "https://nulldaanfix.netlify.app", 
+        "http://localhost:4321"
+    ])
     
     app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
@@ -26,8 +32,11 @@ def create_app():
     app.config['SECRET_KEY'] = config_env('SECRET_KEY')
     app.config['SQLALCHEMY_DATABASE_URI'] = config_env('SQLALCHEMY_DATABASE_URI')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = config_env('SQLALCHEMY_TRACK_MODIFICATIONS', cast=bool)
-    app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
     app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {'pool_pre_ping': True, 'pool_recycle': 250}
+
+    app.config["JWT_SECRET_KEY"] = config_env("JWT_SECRET_KEY")
+    app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(minutes=15)
+    app.config["JWT_REFRESH_TOKEN_EXPIRES"] = timedelta(days=7)
 
     print("DB URI:", app.config["SQLALCHEMY_DATABASE_URI"])
 
@@ -37,9 +46,10 @@ def create_app():
     db.init_app(app)
     Migrate(app, db)
 
-    from . import models
     from .routes import register_routes
 
     register_routes(app)
-  
+    
+    jwt.init_app(app)
+
     return app

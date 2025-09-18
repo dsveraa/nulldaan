@@ -1,4 +1,5 @@
 from flask import request, jsonify, Blueprint
+from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required
 from app.repositories.user_repository import UserRepository
 from app.services.auth_services import AuthService
 from app.services.user_services import SignUpService
@@ -14,15 +15,19 @@ def login():
     password = data.get('password')
     
     try:
-        user = AuthService.login(email, password)
-        return jsonify({'status': 'ok', 
-                        'user_id': user.id,
-                        'username': user.name
-                        }), 200
+        user, access_token, refresh_token = AuthService.login(email, password)
+        return jsonify({
+            'status': 'ok', 
+            'user': {
+                'id': user.id,
+                'name': user.name                            
+            },
+            'access_token': access_token,
+            'refresh_token': refresh_token
+        }), 200
     
     except ValueError as e: 
-        return jsonify({'status': 'error',
-                        'message': str(e)}), 401
+        return jsonify({'status': 'error', 'message': str(e)}), 401
 
 
 @auth_bp.route('/logout')
@@ -57,3 +62,11 @@ def delete_account(email):
     user = UserRepository.get_by_email(email)
     UserRepository.delete(user)
     return 'deleted', 204
+
+
+@auth_bp.route("/refresh", methods=["POST"])
+@jwt_required(refresh=True)
+def refresh():
+    current_user = get_jwt_identity()
+    new_access_token = create_access_token(identity=current_user)
+    return jsonify({"access_token": new_access_token})
