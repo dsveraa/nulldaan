@@ -17,17 +17,28 @@ jwt = JWTManager()
 def create_app():
     app = Flask(__name__)
     
-    CORS(app, supports_credentials=True, origins=[
-        "https://nulldaan.netlify.app", 
-        "https://nulldaanfix.netlify.app", 
-        "http://localhost:4321"
-    ])
-    
-    app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
-
     env = os.environ.get("ENVIRONMENT", "development")
     env_file = f".env.{env}"
     config_env = Config(RepositoryEnv(env_file))
+
+    if env == 'development':
+
+        CORS(app, origins="http://localhost:4321", supports_credentials=True)
+        app.debug=True
+
+    else:
+        CORS(app, 
+            origins=[
+            "https://nulldaan.netlify.app", 
+            "https://nulldaanfix.netlify.app", 
+            "http://localhost:4321"
+            ],
+            supports_credentials=True,
+            methods=["GET","POST","OPTIONS"],
+            allow_headers=["Content-Type","Authorization"])
+        app.debug=False
+        
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
     app.config['SECRET_KEY'] = config_env('SECRET_KEY')
     app.config['SQLALCHEMY_DATABASE_URI'] = config_env('SQLALCHEMY_DATABASE_URI')
