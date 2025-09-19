@@ -18,4 +18,19 @@ def protected():
     data = request.get_json()
     name = data.get('name')
 
+    return jsonify({'status': 'ok', 'name': f'{name} from backend'}), 200
+
+
+@debug_bp.route('/unprotected/<name>')
+def unprotected(name):    
     return jsonify({'status': 'ok', 'name': name}), 200
+
+
+@debug_bp.route('/')
+def is_running():
+    return jsonify({'status': 'ok'}), 200
+
+
+@debug_bp.route("/ping", methods=["GET", "OPTIONS"])
+def ping():
+    return {"pong": True}

@@ -68,5 +68,5 @@ def delete_account(email):
 @jwt_required(refresh=True)
 def refresh():
     current_user = get_jwt_identity()
-    new_access_token = create_access_token(identity=current_user)
+    new_access_token = create_access_token(identity=str(current_user))
     return jsonify({"access_token": new_access_token})
